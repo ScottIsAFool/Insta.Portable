@@ -1,7 +1,7 @@
-﻿using System.Threading;
-using Insta.Portable.Models;
+﻿using Insta.Portable.Models;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Insta.Portable
@@ -17,7 +17,7 @@ namespace Insta.Portable
             var response = await GetResponse(url, null, cancellationToken).ConfigureAwait(false);
             
             var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-            return await ProcessResponse<IEnumerable<Folder>>(json);
+            return ProcessResponse<IEnumerable<Folder>>(json);
         }
 
         public async Task<InstaResponse<Folder>> AddFolderAsync(string title, CancellationToken cancellationToken = default(CancellationToken))
@@ -34,7 +34,7 @@ namespace Insta.Portable
             var response = await GetResponse(url, parameters, cancellationToken).ConfigureAwait(false);
             
             var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-            return await ProcessResponse<Folder>(json);
+            return ProcessResponse<Folder>(json);
         }
 
         public async Task<bool> DeleteFolderAsync(string folderId, CancellationToken cancellationToken = default(CancellationToken))

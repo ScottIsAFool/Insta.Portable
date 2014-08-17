@@ -1,10 +1,9 @@
-﻿using System.Linq;
-using System.Threading;
-using AsyncOAuth;
+﻿using AsyncOAuth;
 using Insta.Portable.Models;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Insta.Portable
@@ -36,26 +35,26 @@ namespace Insta.Portable
 
             if (alreadyHave != null)
             {
-                var enumerable = alreadyHave as int[] ?? alreadyHave.ToArray();
-                if (enumerable != null && enumerable.Any())
+                string have = string.Join(",", alreadyHave);
+                if (string.IsNullOrEmpty(have) == false)
                 {
-                    parameters.Add("have", string.Join(",", enumerable));
+                    parameters.Add("have", have);
                 }
             }
 
             if (highlights != null)
             {
-                var values = highlights as int[] ?? highlights.ToArray();
-                if (values != null && values.Any())
+                string highlightsStr = string.Join("-", highlights);
+                if (string.IsNullOrEmpty(highlightsStr) == false)
                 {
-                    parameters.Add("highlights", string.Join("-", values));
-                }
+                    parameters.Add("highlights", highlightsStr);
+                } 
             }
 
             var response = await GetResponse(url, parameters, cancellationToken).ConfigureAwait(false);
 
             var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-            return await ProcessResponse<BookmarksResponse>(json);
+            return ProcessResponse<BookmarksResponse>(json);
         }
 
         public async Task<string> GetBookmarkContentAsync(int bookmarkId, CancellationToken cancellationToken = default(CancellationToken))
@@ -91,10 +90,10 @@ namespace Insta.Portable
             }
             var response = await GetResponse(url, parameters, cancellationToken).ConfigureAwait(false);
             var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-            return await ProcessResponse<Bookmark>(json);
+            return ProcessResponse<Bookmark>(json);
         }
 
-        public async Task<InstaResponse<Bookmark>> UpdateReadProgressAsync(int bookmarkId, float readPercentage, CancellationToken cancellationToken = default(CancellationToken))
+        public Task<InstaResponse<Bookmark>> UpdateReadProgressAsync(int bookmarkId, float readPercentage, CancellationToken cancellationToken = default(CancellationToken))
         {
             const string url = BookmarksBaseUrl + "/update_read_progress";
 
@@ -106,7 +105,7 @@ namespace Insta.Portable
                 {"progress_timestamp", timestamp.ToString()}
             };
 
-            return await GetBookmarkAsync(url, bookmarkId, parameters, cancellationToken);
+            return GetBookmarkAsync(url, bookmarkId, parameters, cancellationToken);
         }
 
         public async Task<bool> DeleteBookmarkAsync(int bookmarkId, CancellationToken cancellationToken = default(CancellationToken))
@@ -121,32 +120,32 @@ namespace Insta.Portable
             return response.IsSuccessStatusCode;
         }
 
-        public async Task<InstaResponse<Bookmark>> StarBookmarkAsync(int bookmarkId, CancellationToken cancellationToken = default(CancellationToken))
+        public Task<InstaResponse<Bookmark>> StarBookmarkAsync(int bookmarkId, CancellationToken cancellationToken = default(CancellationToken))
         {
             const string url = BookmarksBaseUrl + "/star";
 
-            return await GetBookmarkAsync(url, bookmarkId, cancellationToken: cancellationToken);
+            return GetBookmarkAsync(url, bookmarkId, cancellationToken: cancellationToken);
         }
 
-        public async Task<InstaResponse<Bookmark>> UnstarBookmarkAsync(int bookmarkId, CancellationToken cancellationToken = default(CancellationToken))
+        public Task<InstaResponse<Bookmark>> UnstarBookmarkAsync(int bookmarkId, CancellationToken cancellationToken = default(CancellationToken))
         {
             const string url = BookmarksBaseUrl + "/unstar";
 
-            return await GetBookmarkAsync(url, bookmarkId, cancellationToken: cancellationToken);
+            return GetBookmarkAsync(url, bookmarkId, cancellationToken: cancellationToken);
         }
 
-        public async Task<InstaResponse<Bookmark>> ArchiveBookmarkAsync(int bookmarkId, CancellationToken cancellationToken = default(CancellationToken))
+        public Task<InstaResponse<Bookmark>> ArchiveBookmarkAsync(int bookmarkId, CancellationToken cancellationToken = default(CancellationToken))
         {
             const string url = BookmarksBaseUrl + "/archive";
 
-            return await GetBookmarkAsync(url, bookmarkId, cancellationToken: cancellationToken);
+            return GetBookmarkAsync(url, bookmarkId, cancellationToken: cancellationToken);
         }
 
-        public async Task<InstaResponse<Bookmark>> UnarchiveBookmarkAsync(int bookmarkId, CancellationToken cancellationToken = default(CancellationToken))
+        public Task<InstaResponse<Bookmark>> UnarchiveBookmarkAsync(int bookmarkId, CancellationToken cancellationToken = default(CancellationToken))
         {
             const string url = BookmarksBaseUrl + "/unarchive";
 
-            return await GetBookmarkAsync(url, bookmarkId, cancellationToken: cancellationToken);
+            return GetBookmarkAsync(url, bookmarkId, cancellationToken: cancellationToken);
         }
 
         private async Task<InstaResponse<Bookmark>> GetBookmarkAsync(string url, int bookmarkId, IDictionary<string, string> additionalParameters = null, CancellationToken cancellationToken = default(CancellationToken))
@@ -165,7 +164,7 @@ namespace Insta.Portable
 
             var response = await GetResponse(url, parameters, cancellationToken).ConfigureAwait(false);
             var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-            return await ProcessResponse<Bookmark>(json);
+            return ProcessResponse<Bookmark>(json);
         }
 
         private Task<HttpResponseMessage> GetResponse(string url, IEnumerable<KeyValuePair<string, string>> parameters, CancellationToken cancellationToken = default(CancellationToken))

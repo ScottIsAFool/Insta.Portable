@@ -1,5 +1,4 @@
 ﻿using AsyncOAuth;
-using Insta.Portable.Extensions;
 using Insta.Portable.Models;
 using Newtonsoft.Json;
 using PCLCrypto;
@@ -17,7 +16,6 @@ namespace Insta.Portable
         private readonly string _consumerSecret;
         private const string BaseUrl = "https://www.instapaper.com/api";
         private const string AuthUrl = BaseUrl + "/1.1/oauth";
-        private const string ProfileUrl = BaseUrl + "users/_current";
 
         private InstapaperClient()
         {
@@ -50,6 +48,13 @@ namespace Insta.Portable
 
         public AccessToken AccessToken { get; set; }
 
+        /// <summary>
+        /// Get an AccessToken for the user with the given email and password.
+        /// </summary>
+        /// <param name="emailAddress">The email address for the user.</param>
+        /// <param name="password">The password for the user.</param>
+        /// <param name="cancellationToken"></param>
+        /// <returns>The AccessToken if the user is authenticated. Null if the user is not authenticated.</returns>
         public async Task<AccessToken> GetAuthTokenAsync(string emailAddress, string password, CancellationToken cancellationToken = default(CancellationToken))
         {
             //
@@ -69,13 +74,9 @@ namespace Insta.Portable
             var client = new HttpClient(handler);
 
             var response = await client.PostAsync(authUrl, new FormUrlEncodedContent(parameters), cancellationToken).ConfigureAwait(false);
+            if (response.IsSuccessStatusCode == false) return null;
+
             var tokenBase = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-
-            if (response.StatusCode != System.Net.HttpStatusCode.OK)
-            {
-                throw new HttpRequestException(response.StatusCode + ":" + tokenBase); // error message
-            }
-
             var splitted = tokenBase.Split('&').Select(s => s.Split('=')).ToLookup(xs => xs[0], xs => xs[1]);
             AccessToken = new AccessToken(splitted["oauth_token"].First(), splitted["oauth_token_secret"].First());
             return AccessToken;
@@ -85,16 +86,16 @@ namespace Insta.Portable
         {
             const string url = BaseUrl + "/1.1/account/verify_credentials";
 
-            var response = await GetResponse(url, new List<KeyValuePair<string, string>>(), cancellationToken);
+            var response = await GetResponse(url, new List<KeyValuePair<string, string>>(), cancellationToken).ConfigureAwait(false);
 
             var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-            var result = await ProcessResponse<List<User>>(json);
+            var result = ProcessResponse<List<User>>(json);
             return result.Error == null
                 ? new InstaResponse<User> { Response = result.Response.FirstOrDefault() }
                 : new InstaResponse<User> { Error = result.Error };
         }
 
-        private static async Task<InstaResponse<TReturnType>> ProcessResponse<TReturnType>(string json) where TReturnType : class
+        private static InstaResponse<TReturnType> ProcessResponse<TReturnType>(string json) where TReturnType : class
         {
             if (string.IsNullOrEmpty(json))
             {
